@@ -77,11 +77,7 @@ export function signal(init) {
         }
 
         if (prop == "value") {
-          if (Array.isArray(init)) {
-            return [...init];
-          } else {
-            return init;
-          }
+          return init;
         }
 
         return Reflect.get(target, prop);
@@ -89,15 +85,28 @@ export function signal(init) {
 
       set(target, prop, newValue) {
         if (prop == "value") {
-          init = newValue;
+          try {
+            if (typeof init != typeof newValue) {
+              throw "new value needs to be of same type as intial value";
+            } else if (init?.constructor != newValue?.constructor) {
+              throw "new value needs to be of same type as intial value";
+            }
 
-          if (is_batching) {
-            context_reference.forEach((context) => batch_context.add(context));
-          } else {
-            context_reference.forEach((context) => context(false));
+            init = newValue;
+
+            if (is_batching) {
+              context_reference.forEach((context) =>
+                batch_context.add(context)
+              );
+            } else {
+              context_reference.forEach((context) => context(false));
+            }
+
+            return true;
+          } catch (error) {
+            console.error(error);
+            return true;
           }
-
-          return true;
         }
       },
     };
